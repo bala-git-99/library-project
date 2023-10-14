@@ -1,26 +1,14 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import render_template, request, redirect
 
-'''
-Red underlines? Install the required packages first: 
-Open the Terminal in PyCharm (bottom left). 
+from db_operations import *
 
-On Windows type:
-python -m pip install -r requirements.txt
-
-On MacOS type:
-pip3 install -r requirements.txt
-
-This will install the packages from requirements.txt for this project.
-'''
 
 app = Flask(__name__)
-
-all_books = []
 
 
 @app.route('/')
 def home():
-    return render_template('index.html', books=all_books)
+    return render_template('index.html', books=read_all())
 
 
 @app.route("/add", methods=['GET', 'POST'])
@@ -31,11 +19,28 @@ def add():
             'author': request.form['author'],
             'rating': request.form['rating'],
         }
-        all_books.append(temp_dict)
-        print(all_books)
+
+        new_book = Books(title=temp_dict['title'], author=temp_dict['author'], rating=temp_dict['rating'])
+        new_book.create()
+
+        return redirect("/")
     return render_template('add.html')
+
+
+@app.route("/edit/<int:id>", methods=['GET', 'POST'])
+def edit(id):
+    if request.method == 'POST':
+        update_rating(id, request.form['rating'])
+        return redirect("/")
+    return render_template('edit.html', book=read(id))
+
+
+@app.route("/delete")
+def delete():
+    id = request.args.get('id')
+    delete_book(id)
+    return redirect("/")
 
 
 if __name__ == "__main__":
     app.run(debug=True)
-
